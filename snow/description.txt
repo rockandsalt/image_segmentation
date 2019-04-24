@@ -1,0 +1,93 @@
+===============================================================================
+SNOW
+===============================================================================
+
+-------------------------------------------------------------------------------
+Description
+-------------------------------------------------------------------------------
+Marker-based watershed segmentation is a common technique for partitionaing
+an image into discrete blobs.  In the case of tomography images of porous
+materials, however, it is a challenge to identify markers correctly.  The
+main problem being that too many markers are usually found, resulting in an
+oversegmented image.  The main purpose of the SNOW algorithm is to reduce the
+initial number of points by removing spurious or erroneous peaks, creating a
+Sub-Network of an Oversegmented Watershed.  This involves the following few
+steps:
+
+1.  Perform a Euclidean Distance transform of the pore space.
+
+2.  Apply a Gaussian Blur to the distance transform.  This dramatically
+reduces the number spurious peaks by smoothing out plateaus in the distance
+map.
+
+3.  Find all peaks in the blurred distance map using a medium size structuring
+element (~R = 4-5 voxels).  Too large missing some peaks, and too small finds
+many spurious peaks.
+
+4.  Trim peaks that are on a saddle, which were mistakenly identified as local
+maxima.
+
+5.  Trim peaks that are too near to each other, which is defined as peaks that
+are nearer to another peak than to solid.
+
+6.  Pass the reduced peaks to a marker-based Watershed Segmentation algorithm,
+which finds local valleys in the inverted distance transform.
+
+Steps 1, 2, 3 and 6 use functions typically found in image analysis pacakges
+(i.e. scipy.ndimage + skimage).  Steps 4 and 5 use custom written functions
+that are provided in the accompanying SNOW.py file.
+
+The entire procedure, starting with a binary image of the pore space and
+resutling in a segmented image with each pore identified by an integer label,
+is outlined in the SNOW.py file.
+
+-------------------------------------------------------------------------------
+Inputs
+-------------------------------------------------------------------------------
+im : Binary array (either 2D or 3D) with True values indicating the void voxels
+
+-------------------------------------------------------------------------------
+Outputs
+-------------------------------------------------------------------------------
+regions : An array the same size as im, with integer labels in each voxel
+indicating which pore the voxel belongs to.
+
+===============================================================================
+GETNET
+===============================================================================
+
+-------------------------------------------------------------------------------
+Description
+-------------------------------------------------------------------------------
+The SNOW algorithm produces an image with each voxel assigned an integer value
+identifying to which pore it belongs.  The indices of all voxels in the
+labelled image with a value of N can be extracted and inspected in isolation.
+These locations can be used to index into the distance map to obtain size
+information.  The code in the GETNET.py file implements this process by
+analyzing each pore region in isolation, looking at the labels in the the
+neighboring pores to get connectivity, looking at the distance maps to find
+pore sizes and volumes, throat lengths, and so on.  The specific size
+information determined in this function represents a decent but limited set of
+properties; it is possible and indeed recommended that future efforts could
+obtain more detailed and accurate information by applying more complex
+analysis.
+
+-------------------------------------------------------------------------------
+Inputs
+-------------------------------------------------------------------------------
+im : The array of voxel labels with the solid regions indicated by 0's. The
+regions image produced by the algorithm must be multiplied by the Boolean
+image of the void space.
+
+dt : (Optional) The distance map of the void space, with solid regions
+indicated by 0's. If not provided it will be calculated.
+
+-------------------------------------------------------------------------------
+Outputs
+-------------------------------------------------------------------------------
+net : A Python dictionary containing pore and throat size information as a
+collection of numerical (Numpy) arrays.  Each array is stored under a
+dictionary key such as 'pore.diameter' or 'throat.length', clearly indicating
+the the type of information stored there.  The data storage format is
+compatible with OpenPNM, as descibred in Gostick et al. "OpenPNM: A Pore
+Network Modeling Package." Computing in Science & Engineering, 18(4), p60-74.
