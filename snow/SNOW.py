@@ -104,7 +104,7 @@ def create_image(shape, porosity):
     im = sp.ones(shape=shape, dtype=bool)
     while im.sum()/im.size > porosity:
         temp = sp.rand(*shape) < 0.9999
-        temp = spim.distance_transform_edt(input=temp) > radii
+        temp = spim.distance_transform_edt(input=temp) > 10
         im *= temp
     return im
 
