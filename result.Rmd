@@ -1,11 +1,37 @@
 ---
 title: "ANOVA of z density variation"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
+# factor
+Factor 1 : Layer thickness/size distribution \
+Factor 2 : Linear roller speed \
+Factor 3 : rotational roller speed \
+Factor 4 : saturation \
+
+# Load Data
 
 
 ```{r}
+my_data <- read.csv(file.choose())
 
 ```
 
+# Anova with all interaction
+
+```{r}
+fit <- aov(density ~ fac_1*fac_2*fac_3*fac_4*z, data = my_data)
+summary(fit)
+plot(fit)
+
+```
+
+# Anova with z interaction removed
+
+```{r}
+fit_no_intz <- aov(density ~ fac_1*fac_2*fac_3*fac_4+z, data = my_data)
+summary(fit_no_intz)
+plot(fit_no_intz)
+```
